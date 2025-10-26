@@ -194,13 +194,10 @@ decideStepWhenInSpace context { infoPanelRouteFirstMarker } shipUI =
             ( "route element icon", infoPanelRouteFirstMarker.uiNode )
             (useMenuEntryWithTextContainingFirstOf
                 [ "dock"
-
+                , "跳跃"
+                , "停靠"
                 -- https://forum.botlab.org/t/i-want-to-add-korean-support-on-eve-online-bot-what-should-i-do/4370/14
-                , "도킹"
                 , "jump"
-
-                -- https://forum.botlab.org/t/i-want-to-add-korean-support-on-eve-online-bot-what-should-i-do/4370
-                , "점프 - 스타게이트 사용"
                 ]
                 menuCascadeCompleted
             )
