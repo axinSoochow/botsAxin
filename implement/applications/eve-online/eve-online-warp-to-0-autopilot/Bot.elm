@@ -58,6 +58,7 @@ import EveOnline.BotFrameworkSeparatingMemory
         , waitForProgressInGame
         )
 import EveOnline.ParseUserInterface exposing (centerFromDisplayRegion)
+import Random
 
 
 defaultBotSettings : BotSettings
@@ -175,7 +176,7 @@ autopilotBotDecisionRoot context =
                 }
                 context.readingFromGameClient
     )
-        |> EveOnline.BotFrameworkSeparatingMemory.setMillisecondsToNextReadingFromGameBase 2000
+        |> EveOnline.BotFrameworkSeparatingMemory.setMillisecondsToNextReadingFromGameBase (Tuple.first <| Random.step (Random.int 2000 3000) (Random.initialSeed 42))
 
 
 decideStepWhenInSpace :

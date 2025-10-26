@@ -1,41 +1,41 @@
-{- EVE Online combat anomaly bot version 2025-10-14
+{- EVE Online战斗异常空间机器人版本 2025-10-14
 
-   This bot uses the probe scanner to find combat anomalies and kills rats using drones and weapon modules.
+   该机器人使用探针扫描器查找战斗异常空间，并使用无人机和武器模块击杀敌人。
 
-   ## Features
+   ## 功能特性
 
-   + Automatically detects if another pilot is in an anomaly on arrival and switches to another anomaly if necessary.
-   + Filtering for specific anomalies using bot settings.
-   + Avoiding dangerous or too-powerful rats using bot settings.
-   + Remembers observed properties of anomalies, like other pilots or dangerous rats, to inform the selection of anomalies in the future.
+   + 自动检测异常空间中是否有其他飞行员，如果有则切换到其他异常空间
+   + 通过机器人设置筛选特定类型的异常空间
+   + 通过机器人设置避开危险或过强的敌人
+   + 记住观察到的异常空间属性，如其他飞行员或危险敌人，以指导未来的异常空间选择
 
-   ## Setting up the Game Client
+   ## 游戏客户端设置
 
-   Despite being quite robust, this bot is less intelligent than a human. For example, its perception is more limited than ours, so we need to set up the game to ensure that the bot can see everything it needs. Following is the list of setup instructions for the EVE Online client:
+   尽管该机器人相当健壮，但它不如人类智能。例如，它的感知能力比我们有限，因此我们需要设置游戏以确保机器人能够看到它需要的一切。以下是EVE Online客户端的设置说明：
 
-   + Set the UI language to English.
-   + Undock, open probe scanner, overview window and drones window.
-   + In the ship UI, arrange the modules:
-     + Place the modules to use in combat (to activate on targets) in the top row.
-     + Hide passive modules by disabling the check-box `Display Passive Modules`.
-   + Configure the keyboard key 'W' to make the ship orbit.
+   + 将UI语言设置为英语
+   + 离港，打开探针扫描器、概览窗口和无人机窗口
+   + 在船舶UI中，排列模块：
+     + 将战斗中使用的模块（用于激活目标）放在顶行
+     + 通过取消选中`Display Passive Modules`复选框隐藏被动模块
+   + 配置键盘键'W'使船舶执行环绕动作
 
-   ## Configuration Settings
+   ## 配置设置
 
-   All settings are optional; you only need them in case the defaults don't fit your use-case.
+   所有设置都是可选的；只有在默认值不适合您的用例时才需要它们。
 
-   + `anomaly-name` : Name of anomalies to select. Use this setting multiple times to select multiple names.
-   + `hide-when-neutral-in-local` : Set this to 'yes' to make the bot dock in a station or structure when a neutral or hostile appears in the 'local' chat.
-   + `avoid-rat` : Name of a rat to avoid by warping away. Enter the name as it appears in the overview. Use this setting multiple times to select multiple names.
-   + `prioritize-rat` : Name of a rat to prioritize when locking targets. Enter the name as it appears in the overview. Use this setting multiple times to select multiple names.
-   + `activate-module-always` : Text found in tooltips of ship modules that should always be active. For example: "shield hardener".
-   + `anomaly-wait-time`: Minimum time to wait after arriving in an anomaly before considering it finished. Use this if you see anomalies in which rats arrive later than you arrive on grid.
-   + `warp-to-anomaly-distance`: Defaults to 'Within 0 m'
-   + `deactivate-module-on-warp` : Name of a module to deactivate when warping. Enter the name as it appears in the tooltip. Use this setting multiple times to select multiple modules.
-   + `hide-location-name` : Name of a location to hide. Enter the name as it appears in the 'Locations' window.
+   + `anomaly-name` : 要选择的异常空间名称。多次使用此设置可选择多个名称。
+   + `hide-when-neutral-in-local` : 设置为'yes'可使机器人在'本地'聊天中出现中立或敌对玩家时停靠在空间站或结构中。
+   + `avoid-rat` : 要通过跃迁避开的敌人名称。输入名称时使用它在概览中显示的形式。多次使用此设置可选择多个名称。
+   + `prioritize-rat` : 锁定目标时优先考虑的敌人名称。输入名称时使用它在概览中显示的形式。多次使用此设置可选择多个名称。
+   + `activate-module-always` : 船舶模块提示文本，这些模块应始终处于活动状态。例如："shield hardener"（护盾硬化器）。
+   + `anomaly-wait-time`: 到达异常空间后考虑其完成前的最短等待时间。如果您看到一些异常空间中敌人出现的时间晚于您到达网格的时间，请使用此设置。
+   + `warp-to-anomaly-distance`: 默认为'Within 0 m'（0米范围内）
+   + `deactivate-module-on-warp` : 跃迁时要停用的模块名称。输入名称时使用它在提示文本中显示的形式。多次使用此设置可选择多个模块。
+   + `hide-location-name` : 要隐藏的位置名称。输入名称时使用它在'位置'窗口中显示的形式。
 
-   When using more than one setting, start a new line for each setting in the text input field.
-   Here is an example of a complete settings string:
+   使用多个设置时，请在文本输入字段中为每个设置开始一个新行。
+   以下是完整设置字符串的示例：
 
    ```
    anomaly-name = Drone Patrol
@@ -46,7 +46,7 @@
    hide-location-name = Dock me here
    ```
 
-   To learn more about the anomaly bot, see <https://to.botlab.org/guide/app/eve-online-combat-anomaly-bot>
+   要了解有关异常空间机器人的更多信息，请参阅 <https://to.botlab.org/guide/app/eve-online-combat-anomaly-bot>
 
 -}
 {-
@@ -112,25 +112,27 @@ import Result.Extra
 import Set
 
 
+-- 默认机器人设置
 defaultBotSettings : BotSettings
 defaultBotSettings =
-    { hideWhenNeutralInLocal = PromptParser.No
-    , anomalyNames = []
-    , avoidRats = []
-    , prioritizeRats = []
-    , activateModulesAlways = []
-    , maxTargetCount = 3
-    , botStepDelayMilliseconds = { minimum = 1300, maximum = 1500 }
-    , anomalyWaitTimeSeconds = 15
-    , orbitInCombat = PromptParser.Yes
-    , orbitObjectNames = []
-    , warpToAnomalyDistance = "Within 0 m"
-    , sortOverviewBy = Nothing
-    , deactivateModuleOnWarp = []
-    , hideLocationNames = []
+    { hideWhenNeutralInLocal = PromptParser.No -- 本地频道中有中立玩家时是否隐藏
+    , anomalyNames = [] -- 要选择的异常空间名称列表
+    , avoidRats = [] -- 要避开的敌人名称列表
+    , prioritizeRats = [] -- 优先攻击的敌人名称列表
+    , activateModulesAlways = [] -- 始终激活的模块名称列表
+    , maxTargetCount = 5 -- 最大目标锁定数量
+    , botStepDelayMilliseconds = { minimum = 1200, maximum = 1500 } -- 机器人步骤延迟（毫秒）
+    , anomalyWaitTimeSeconds = 15 -- 在异常空间中的最短等待时间
+    , orbitInCombat = PromptParser.Yes -- 战斗中是否环绕飞行
+    , orbitObjectNames = [] -- 要环绕的物体名称列表
+    , warpToAnomalyDistance = "Within 0 m" -- 跃迁到异常空间的距离
+    , sortOverviewBy = Nothing -- 概览排序列
+    , deactivateModuleOnWarp = [] -- 跃迁时停用的模块列表
+    , hideLocationNames = [] -- 隐藏位置名称列表
     }
 
 
+-- 解析机器人设置字符串
 parseBotSettings : String -> Result String BotSettings
 parseBotSettings =
     PromptParser.parseSimpleListOfAssignmentsSeparatedByNewlines
@@ -272,90 +274,101 @@ parseBotSettings =
         defaultBotSettings
 
 
+-- 良好声望模式列表，用于识别本地频道中的友好玩家
 goodStandingPatterns : List String
 goodStandingPatterns =
     [ "good standing", "excellent standing", "is in your" ]
 
 
+-- 机器人设置类型定义
 type alias BotSettings =
-    { hideWhenNeutralInLocal : PromptParser.YesOrNo
-    , anomalyNames : List String
-    , avoidRats : List String
-    , prioritizeRats : List String
-    , activateModulesAlways : List String
-    , maxTargetCount : Int
-    , anomalyWaitTimeSeconds : Int
-    , botStepDelayMilliseconds : IntervalInt
-    , orbitInCombat : PromptParser.YesOrNo
-    , orbitObjectNames : List String
-    , warpToAnomalyDistance : String
-    , sortOverviewBy : Maybe String
-    , deactivateModuleOnWarp : List String
-    , hideLocationNames : List String
+    { hideWhenNeutralInLocal : PromptParser.YesOrNo -- 本地频道中有中立玩家时是否隐藏
+    , anomalyNames : List String -- 要选择的异常空间名称列表
+    , avoidRats : List String -- 要避开的敌人名称列表
+    , prioritizeRats : List String -- 优先攻击的敌人名称列表
+    , activateModulesAlways : List String -- 始终激活的模块名称列表
+    , maxTargetCount : Int -- 最大目标锁定数量
+    , anomalyWaitTimeSeconds : Int -- 在异常空间中的最短等待时间
+    , botStepDelayMilliseconds : IntervalInt -- 机器人步骤延迟（毫秒）
+    , orbitInCombat : PromptParser.YesOrNo -- 战斗中是否环绕飞行
+    , orbitObjectNames : List String -- 要环绕的物体名称列表
+    , warpToAnomalyDistance : String -- 跃迁到异常空间的距离
+    , sortOverviewBy : Maybe String -- 概览排序列
+    , deactivateModuleOnWarp : List String -- 跃迁时停用的模块列表
+    , hideLocationNames : List String -- 隐藏位置名称列表
     }
 
 
+-- 机器人状态类型
 type alias State =
     EveOnline.UnstuckBot.UnstuckBotState
         (EveOnline.BotFrameworkSeparatingMemory.StateIncludingFramework BotSettings BotMemory)
 
 
+-- 机器人内存类型，存储机器人运行时的各种状态信息
 type alias BotMemory =
-    { lastDockedStationNameFromInfoPanel : Maybe String
-    , shipModules : ShipModulesMemory
-    , overviewWindows : OverviewWindowsMemory
-    , shipWarpingInLastReading : Maybe Bool
-    , visitedAnomalies : Dict.Dict String MemoryOfAnomaly
-    , notEnoughBandwidthToLaunchDrone : Bool
-    , droneBandwidthLimitatatinEvents : List { timeMilliseconds : Int, dronesInSpaceCount : Int }
+    { lastDockedStationNameFromInfoPanel : Maybe String -- 上次停靠的空间站名称
+    , shipModules : ShipModulesMemory -- 船舶模块状态记忆
+    , overviewWindows : OverviewWindowsMemory -- 概览窗口状态记忆
+    , shipWarpingInLastReading : Maybe Bool -- 上次读取时船舶是否正在跃迁
+    , visitedAnomalies : Dict.Dict String MemoryOfAnomaly -- 已访问的异常空间信息
+    , notEnoughBandwidthToLaunchDrone : Bool -- 是否无人机带宽不足
+    , droneBandwidthLimitatatinEvents : List { timeMilliseconds : Int, dronesInSpaceCount : Int } -- 无人机带宽限制事件记录
     }
 
 
+-- 异常空间记忆类型，存储关于已访问异常空间的详细信息
 type alias MemoryOfAnomaly =
-    { arrivalTime : { milliseconds : Int }
-    , otherPilotsFoundOnArrival : List String
-    , ratsSeen : Set.Set String
+    { arrivalTime : { milliseconds : Int } -- 到达时间
+    , otherPilotsFoundOnArrival : List String -- 到达时发现的其他飞行员
+    , ratsSeen : Set.Set String -- 在异常空间中看到的敌人名称集合
     }
 
 
+-- 机器人决策上下文类型
 type alias BotDecisionContext =
     EveOnline.BotFrameworkSeparatingMemory.StepDecisionContext BotSettings BotMemory
 
 
+-- 忽略探针扫描结果的原因类型
 type ReasonToIgnoreProbeScanResult
-    = ScanResultHasNoID
-    | AvoidAnomaly ReasonToAvoidAnomaly
+    = ScanResultHasNoID -- 扫描结果没有ID
+    | AvoidAnomaly ReasonToAvoidAnomaly -- 因特定原因避开异常空间
 
 
+-- 避开异常空间的具体原因类型
 type ReasonToAvoidAnomaly
-    = IsNoCombatAnomaly
-    | DoesNotMatchAnomalyNameFromSettings
-    | FoundOtherPilotOnArrival String
-    | FoundRatToAvoid String
+    = IsNoCombatAnomaly -- 不是战斗异常空间
+    | DoesNotMatchAnomalyNameFromSettings -- 不匹配设置中的异常空间名称
+    | FoundOtherPilotOnArrival String -- 到达时发现其他飞行员
+    | FoundRatToAvoid String -- 发现要避开的敌人
 
 
+-- 按攻击优先级分组的敌人类型
 type alias RatsByAttackPriority =
-    { overviewEntriesByPrio : List ( OverviewWindowEntry, List OverviewWindowEntry )
-    , targetsByPrio : List ( EveOnline.ParseUserInterface.Target, List EveOnline.ParseUserInterface.Target )
+    { overviewEntriesByPrio : List ( OverviewWindowEntry, List OverviewWindowEntry ) -- 按优先级分组的概览条目
+    , targetsByPrio : List ( EveOnline.ParseUserInterface.Target, List EveOnline.ParseUserInterface.Target ) -- 按优先级分组的目标
     }
 
 
+-- 描述避开异常空间的原因
 describeReasonToAvoidAnomaly : ReasonToAvoidAnomaly -> String
 describeReasonToAvoidAnomaly reason =
     case reason of
         IsNoCombatAnomaly ->
-            "Is not a combat anomaly"
+            "不是战斗异常空间"
 
         DoesNotMatchAnomalyNameFromSettings ->
-            "Does not match an anomaly name from the settings"
+            "不匹配设置中的异常空间名称"
 
         FoundOtherPilotOnArrival otherPilot ->
-            "Found another pilot on arrival: " ++ otherPilot
+            "到达时发现其他飞行员: " ++ otherPilot
 
         FoundRatToAvoid rat ->
-            "Found a rat to avoid: " ++ rat
+            "发现要避开的敌人: " ++ rat
 
 
+-- 查找忽略探针扫描结果的原因
 findReasonToIgnoreProbeScanResult : BotDecisionContext -> EveOnline.ParseUserInterface.ProbeScanResult -> Maybe ReasonToIgnoreProbeScanResult
 findReasonToIgnoreProbeScanResult context probeScanResult =
     case probeScanResult.cellsTexts |> Dict.get "ID" of
@@ -364,12 +377,14 @@ findReasonToIgnoreProbeScanResult context probeScanResult =
 
         Just scanResultID ->
             let
+                -- 判断是否为战斗异常空间
                 isCombatAnomaly =
                     probeScanResult.cellsTexts
                         |> Dict.get "Group"
                         |> Maybe.map (stringContainsIgnoringCase "combat")
                         |> Maybe.withDefault False
 
+                -- 判断是否匹配设置中的异常空间名称
                 matchesAnomalyNameFromSettings =
                     (context.eventContext.botSettings.anomalyNames |> List.isEmpty)
                         || (context.eventContext.botSettings.anomalyNames
@@ -389,10 +404,12 @@ findReasonToIgnoreProbeScanResult context probeScanResult =
                 Just (AvoidAnomaly DoesNotMatchAnomalyNameFromSettings)
 
             else
+                -- 从记忆中查找是否有避开该异常空间的原因
                 findReasonToAvoidAnomalyFromMemory context { anomalyID = scanResultID }
                     |> Maybe.map AvoidAnomaly
 
 
+-- 从记忆中查找避开异常空间的原因
 findReasonToAvoidAnomalyFromMemory : BotDecisionContext -> { anomalyID : String } -> Maybe ReasonToAvoidAnomaly
 findReasonToAvoidAnomalyFromMemory context { anomalyID } =
     case memoryOfAnomalyWithID anomalyID context.memory of
@@ -402,36 +419,43 @@ findReasonToAvoidAnomalyFromMemory context { anomalyID } =
         Just memoryOfAnomaly ->
             case memoryOfAnomaly.otherPilotsFoundOnArrival of
                 otherPilotFoundOnArrival :: _ ->
+                    -- 如果到达时发现其他飞行员，避开该异常空间
                     Just (FoundOtherPilotOnArrival otherPilotFoundOnArrival)
 
                 [] ->
                     let
+                        -- 查找在异常空间中看到的需要避开的敌人
                         ratsToAvoidSeen =
                             getRatsToAvoidSeenInAnomaly context.eventContext.botSettings memoryOfAnomaly
                     in
                     case ratsToAvoidSeen |> Set.toList of
                         ratToAvoid :: _ ->
+                            -- 如果发现需要避开的敌人，避开该异常空间
                             Just (FoundRatToAvoid ratToAvoid)
 
                         [] ->
                             Nothing
 
 
+-- 获取在异常空间中看到的需要避开的敌人
 getRatsToAvoidSeenInAnomaly : BotSettings -> MemoryOfAnomaly -> Set.Set String
 getRatsToAvoidSeenInAnomaly settings =
     .ratsSeen >> Set.filter (shouldAvoidRatAccordingToSettings settings)
 
 
+-- 根据设置判断是否应该避开特定敌人
 shouldAvoidRatAccordingToSettings : BotSettings -> String -> Bool
 shouldAvoidRatAccordingToSettings settings ratName =
     settings.avoidRats |> List.map String.toLower |> List.member (ratName |> String.toLower)
 
 
+-- 通过ID获取异常空间记忆
 memoryOfAnomalyWithID : String -> BotMemory -> Maybe MemoryOfAnomaly
 memoryOfAnomalyWithID anomalyID =
     .visitedAnomalies >> Dict.get anomalyID
 
 
+-- 机器人决策根节点
 anomalyBotDecisionRoot : BotDecisionContext -> DecisionPathNode
 anomalyBotDecisionRoot context =
     anomalyBotDecisionRootBeforeApplyingSettings context
@@ -439,6 +463,7 @@ anomalyBotDecisionRoot context =
             (randomIntFromInterval context context.eventContext.botSettings.botStepDelayMilliseconds)
 
 
+-- 应用设置前的机器人决策根节点
 anomalyBotDecisionRootBeforeApplyingSettings : BotDecisionContext -> DecisionPathNode
 anomalyBotDecisionRootBeforeApplyingSettings context =
     generalSetupInUserInterface context
@@ -467,6 +492,7 @@ anomalyBotDecisionRootBeforeApplyingSettings context =
             )
 
 
+-- 用户界面通用设置函数，执行一系列UI准备工作
 generalSetupInUserInterface : BotDecisionContext -> Maybe DecisionPathNode
 generalSetupInUserInterface context =
     [ closeMessageBox
@@ -489,6 +515,7 @@ generalSetupInUserInterface context =
         |> List.head
 
 
+-- 关闭消息框函数
 closeMessageBox : ReadingFromGameClient -> Maybe DecisionPathNode
 closeMessageBox readingFromGameClient =
     readingFromGameClient.messageBoxes
@@ -527,6 +554,7 @@ closeMessageBox readingFromGameClient =
             )
 
 
+-- 根据条件决定是否继续执行隐藏行为（如停靠）
 continueIfShouldHide : { ifShouldHide : DecisionPathNode } -> BotDecisionContext -> Maybe DecisionPathNode
 continueIfShouldHide config context =
     case checkIfShouldHide context of
@@ -546,9 +574,11 @@ continueIfShouldHide config context =
                 )
 
 
+-- 检查是否应该隐藏（如停靠）的条件
 checkIfShouldHide : BotDecisionContext -> Maybe ( String, Bool )
 checkIfShouldHide context =
     let
+        -- 检查是否没有船舶模块按钮
         hasNoShipModules : Bool
         hasNoShipModules =
             case context.readingFromGameClient.shipUI of
@@ -560,11 +590,12 @@ checkIfShouldHide context =
     in
     if hasNoShipModules then
         Just
-            ( "Ship UI contains zero module buttons."
+            ( "船舶UI中没有模块按钮。"
             , False
             )
 
     else
+        -- 检查会话结束时间，如果少于200秒则需要隐藏
         case
             context.eventContext
                 |> EveOnline.BotFramework.secondsToSessionEnd
@@ -572,11 +603,12 @@ checkIfShouldHide context =
         of
             Just secondsToSessionEnd ->
                 Just
-                    ( "Session ends in " ++ String.fromInt secondsToSessionEnd ++ " seconds."
+                    ( "会话将在 " ++ String.fromInt secondsToSessionEnd ++ " 秒后结束。"
                     , False
                     )
 
             Nothing ->
+                -- 检查是否启用了本地频道中有中立玩家时隐藏的设置
                 if context.eventContext.botSettings.hideWhenNeutralInLocal /= PromptParser.Yes then
                     Nothing
 
@@ -584,12 +616,13 @@ checkIfShouldHide context =
                     case context.readingFromGameClient |> localChatWindowFromUserInterface of
                         Nothing ->
                             Just
-                                ( "I don't see the local chat window."
+                                ( "看不到本地聊天窗口。"
                                 , True
                                 )
 
                         Just localChatWindow ->
                             let
+                                -- 判断聊天用户是否有良好声望
                                 chatUserHasGoodStanding chatUser =
                                     goodStandingPatterns
                                         |> List.any
@@ -604,6 +637,7 @@ checkIfShouldHide context =
                                                             standingIconHint
                                             )
 
+                                -- 获取没有良好声望的用户列表（敌人或中立）
                                 subsetOfUsersWithNoGoodStanding : List { uiNode : EveOnline.ParseUserInterface.UITreeNodeWithDisplayRegion, name : Maybe String, standingIconHint : Maybe String }
                                 subsetOfUsersWithNoGoodStanding =
                                     case localChatWindow.userlist of
@@ -624,13 +658,16 @@ checkIfShouldHide context =
                                 Nothing
 
 
+-- 逃跑函数：当需要隐藏时，机器人会前往指定位置或随机空间站
 runAway : BotDecisionContext -> EveOnline.ParseUserInterface.ShipUI -> DecisionPathNode
 runAway context shipUI =
     case context.eventContext.botSettings.hideLocationNames of
         [] ->
+            -- 如果没有配置隐藏位置，停靠到随机空间站或结构
             dockAtRandomStationOrStructure context shipUI
 
         hideLocationNames ->
+            -- 尝试前往配置的隐藏位置
             let
                 routesToHideLocation =
                     dockOrWarpToLocationWithMatchingName
@@ -639,22 +676,24 @@ runAway context shipUI =
             in
             case routesToHideLocation.viaLocationsWindow of
                 Just viaLocationsWindow ->
+                    -- 通过位置窗口前往隐藏位置
                     viaLocationsWindow
 
                 Nothing ->
                     case routesToHideLocation.viaOverview of
                         Just viaOverview ->
+                            -- 通过概览前往隐藏位置
                             viaOverview
 
                         Nothing ->
+                            -- 如果找不到配置的隐藏位置，使用太阳系菜单
                             describeBranch
                                 (String.concat
-                                    [ "Did not find any of the "
+                                    [ "在位置窗口或概览窗口中未找到配置的 "
                                     , String.fromInt (List.length hideLocationNames)
-                                    , " configured locations ("
+                                    , " 个位置中的任何一个 ("
                                     , String.join ", " hideLocationNames
-                                    , ") in the locations window or any overview window. "
-                                    , "Defaulting to solar system menu."
+                                    , ")。默认使用太阳系菜单。"
                                     ]
                                 )
                                 (routesToHideLocation.viaSolarSystemMenu ())
@@ -929,37 +968,44 @@ dockAtRandomStationOrStructure context seeUndockingComplete =
                 context
 
 
+-- 决定在太空中的下一步行动
+-- 这是机器人在太空中的主要决策函数，处理是否需要隐藏或执行正常任务
 decideNextActionWhenInSpace : BotDecisionContext -> EveOnline.ParseUserInterface.ShipUI -> DecisionPathNode
 decideNextActionWhenInSpace context shipUI =
     case
         continueIfShouldHide
             { ifShouldHide =
+                -- 如果需要隐藏，先回收无人机，然后逃离
                 returnDronesToBay context
                     |> Maybe.withDefault
                         (describeBranch
-                            "Hide at configured location."
+                            "在配置的位置隐藏。"
                             (runAway context shipUI)
                         )
             }
             context
     of
         Just hideAction ->
+            -- 如果需要隐藏，执行隐藏动作
             hideAction
 
         Nothing ->
+            -- 不需要隐藏时，执行正常太空行动
             decideNextActionWhenInSpaceNotHiding context shipUI
 
 
+-- 不需要隐藏时决定在太空中的下一步行动
 decideNextActionWhenInSpaceNotHiding :
     BotDecisionContext
     -> EveOnline.ParseUserInterface.ShipUI
     -> DecisionPathNode
 decideNextActionWhenInSpaceNotHiding context shipUI =
     if shipUIIndicatesShipIsWarpingOrJumping shipUI then
-        describeBranch "I see we are warping."
-            ([ returnDronesToBay context
-             , deactivateModulesForWarp context
-             , readShipUIModuleButtonTooltips context
+        -- 如果正在跃迁，执行跃迁时的动作
+        describeBranch "我看到我们正在跃迁。"
+            ([ returnDronesToBay context -- 回收无人机
+             , deactivateModulesForWarp context -- 停用跃迁时不需要的模块
+             , readShipUIModuleButtonTooltips context -- 读取船舶模块按钮提示
              ]
                 |> List.filterMap identity
                 |> List.head
@@ -967,23 +1013,28 @@ decideNextActionWhenInSpaceNotHiding context shipUI =
             )
 
     else
+        -- 不在跃迁时，检查模块状态
         readShipUIModuleButtonTooltips context
             |> Maybe.withDefault
                 (case
+                    -- 查找需要始终激活但目前未激活的模块
                     context
                         |> knownModulesToActivateAlways
                         |> List.filter (Tuple.second >> moduleIsActiveOrReloading >> not)
                         |> List.head
                  of
                     Just ( inactiveModuleMatchingText, inactiveModule ) ->
-                        describeBranch ("I see inactive module '" ++ inactiveModuleMatchingText ++ "' to activate always. Activate it.")
+                        -- 激活需要始终开启的模块
+                        describeBranch ("发现未激活的需要始终开启的模块 '" ++ inactiveModuleMatchingText ++ "'。激活它。")
                             (clickModuleButtonButWaitIfClickedInPreviousStep context inactiveModule)
 
                     Nothing ->
+                        -- 所有需要始终激活的模块都已激活，继续执行下一步
                         modulesToActivateAlwaysActivated context shipUI
                 )
 
 
+-- 当所有需要始终激活的模块都已激活时的下一步决策
 modulesToActivateAlwaysActivated :
     BotDecisionContext
     -> EveOnline.ParseUserInterface.ShipUI
@@ -991,12 +1042,10 @@ modulesToActivateAlwaysActivated :
 modulesToActivateAlwaysActivated context shipUI =
     case fightRatsIfShipIsPointed context shipUI of
         Just fightPointingRats ->
-            {-
-               Adapt to observation shared with session-recording-2024-05-15T13-11-03:
-               The anomaly is not visible anymore, since 'site has despawned',
-               but there are still rats pointing the player ship.
-               Therefore, we increase priority of fighting pointing rats to be independent of an anomaly.
-            -}
+            {- 应对特定情况：
+                异常空间可能已消失（'site has despawned'），但仍有敌人在指向玩家飞船。
+                因此，我们提高了与指向玩家的敌人战斗的优先级，使其独立于异常空间状态。
+             -}
             fightPointingRats
 
         Nothing ->
@@ -1091,99 +1140,115 @@ undockUsingStationWindow context { ifCannotReachButton } =
                         )
 
 
+-- 在异常空间内决定下一步行动的函数
+-- 这是机器人在异常空间中执行战斗任务的核心决策逻辑
 decideActionInAnomaly :
-    { arrivalInAnomalyAgeSeconds : Int }
+    { arrivalInAnomalyAgeSeconds : Int } -- 到达异常空间的时间（秒）
+    -- 决定在异常空间中的下一步行动
+    -- 这个函数是机器人战斗行为的核心，处理目标锁定、攻击和战斗管理
     -> BotDecisionContext
     -> EveOnline.ParseUserInterface.ShipUI
-    -> DecisionPathNode
+    -> DecisionPathNode -- 战斗完成后的继续节点
     -> DecisionPathNode
 decideActionInAnomaly { arrivalInAnomalyAgeSeconds } context shipUI continueIfCombatComplete =
     let
+        -- 获取按照优先级排序的敌人列表
         ratsToAttackByPriority =
             ratsToAttackByPriorityFromContext context
 
+        -- 展开优先级排序的敌人列表为单一列表
         overviewEntriesToAttack : List OverviewWindowEntry
         overviewEntriesToAttack =
             ratsToAttackByPriority.overviewEntriesByPrio
                 |> List.concatMap (\( first, rest ) -> first :: rest)
 
+        -- 获取需要锁定但尚未锁定的目标列表
         overviewEntriesToLock =
             overviewEntriesToAttack
-                |> List.filter (overviewEntryIsTargetedOrTargeting >> not)
-                |> List.map (lockTargetFromOverviewEntry context)
+                |> List.filter (overviewEntryIsTargetedOrTargeting >> not) -- 过滤掉已锁定或正在锁定的目标
+                |> List.map (lockTargetFromOverviewEntry context) -- 创建锁定操作
 
+        -- 确定是否需要解锁当前目标
         targetsToUnlock =
             if overviewEntriesToAttack |> List.any overviewEntryIsActiveTarget then
-                []
-
+                [] -- 如果有需要攻击的目标是当前激活目标，则不解锁
             else
-                context.readingFromGameClient.targets |> List.filter .isActiveTarget
+                context.readingFromGameClient.targets |> List.filter .isActiveTarget -- 否则解锁所有当前激活目标
 
+        -- 获取所有概览条目
         overviewsAllEntries =
             context.readingFromGameClient.overviewWindows
                 |> List.concatMap .entries
 
+        -- 确定要环绕的对象
         maybeObjectToOrbit =
             case findObjectToOrbitByName context.eventContext.botSettings.orbitObjectNames overviewsAllEntries of
                 Just fromName ->
-                    Just fromName
-
+                    Just fromName -- 使用配置的环绕对象
                 Nothing ->
-                    List.Extra.last overviewEntriesToAttack
+                    List.Extra.last overviewEntriesToAttack -- 如果没有配置环绕对象，则使用最后一个攻击目标
 
+        -- 创建确保船舶正在环绕的决策
         ensureShipIsOrbitingDecision =
             case maybeObjectToOrbit of
                 Nothing ->
-                    Nothing
-
+                    Nothing -- 没有目标可以环绕
                 Just objectToOrbit ->
-                    ensureShipIsOrbiting shipUI objectToOrbit
+                    ensureShipIsOrbiting shipUI objectToOrbit -- 执行环绕操作
 
+        -- 计算在异常空间中的剩余等待时间
         waitTimeRemainingSeconds =
             context.eventContext.botSettings.anomalyWaitTimeSeconds - arrivalInAnomalyAgeSeconds
 
+        -- 没有敌人可攻击时的决策
         decisionIfNoEnemyToAttack =
             if overviewEntriesToAttack |> List.isEmpty then
+                -- 如果没有敌人，检查是否需要等待
                 if waitTimeRemainingSeconds <= 0 then
+                    -- 等待时间已过，回收无人机然后继续
                     returnDronesToBay context
                         |> Maybe.withDefault
-                            (describeBranch "No drones to return." continueIfCombatComplete)
-
+                            (describeBranch "无无人机需要回收。" continueIfCombatComplete)
                 else
+                    -- 等待时间未过，继续等待
                     describeBranch
-                        ("Wait before considering the anomaly finished: " ++ String.fromInt waitTimeRemainingSeconds ++ " seconds")
+                        ("等待异常空间完成前的时间：" ++ String.fromInt waitTimeRemainingSeconds ++ " 秒")
                         waitForProgressInGame
-
             else
-                describeBranch "Wait for target locking to complete." waitForProgressInGame
+                -- 有敌人但尚未锁定完成，等待锁定
+                describeBranch "等待目标锁定完成。" waitForProgressInGame
 
+        -- 继续锁定概览条目的辅助函数
         continueLockOverviewEntries { ifNoEntryToLock } =
             case resultFirstSuccessOrFirstError overviewEntriesToLock of
                 Nothing ->
-                    describeBranch "I see no more overview entries to lock."
+                    -- 没有更多目标需要锁定
+                    describeBranch "没有更多需要锁定的概览条目。"
                         ifNoEntryToLock
-
                 Just nextOverviewEntryToLockResult ->
-                    describeBranch "I see an overview entry to lock."
+                    -- 锁定下一个目标
+                    describeBranch "发现需要锁定的概览条目。"
                         (nextOverviewEntryToLockResult
                             |> Result.Extra.unpack
                                 (describeBranch >> (|>) askForHelpToGetUnstuck)
                                 identity
                         )
 
+        -- 攻击敌人的决策逻辑
         decisionToKillRats =
             case targetsToUnlock of
                 targetToUnlock :: _ ->
-                    describeBranch "I see a target to unlock."
+                    -- 需要解锁当前目标
+                    describeBranch "发现需要解锁的目标。"
                         (useContextMenuCascade
-                            ( "locked target"
+                            ( "已锁定目标"
                             , targetToUnlock.barAndImageCont |> Maybe.withDefault targetToUnlock.uiNode
                             )
                             (useMenuEntryWithTextContaining "unlock" menuCascadeCompleted)
                             context
                         )
-
                 [] ->
+                    -- 使用无人机和武器模块攻击敌人
                     fightUsingDronesAndModules
                         { ifNoTarget = continueLockOverviewEntries { ifNoEntryToLock = decisionIfNoEnemyToAttack }
                         , lockNextTarget = continueLockOverviewEntries { ifNoEntryToLock = waitForProgressInGame }
@@ -1192,14 +1257,16 @@ decideActionInAnomaly { arrivalInAnomalyAgeSeconds } context shipUI continueIfCo
                         context
                         shipUI
     in
+    -- 根据配置决定是否在战斗中环绕目标
     if context.eventContext.botSettings.orbitInCombat == PromptParser.Yes then
+        -- 如果启用环绕，执行环绕操作或战斗
         ensureShipIsOrbitingDecision
             |> Maybe.withDefault (Ok decisionToKillRats)
             |> Result.Extra.unpack
                 (describeBranch >> (|>) decisionToKillRats)
                 identity
-
     else
+        -- 如果禁用环绕，直接执行战斗逻辑
         decisionToKillRats
 
 
@@ -1225,6 +1292,8 @@ findObjectToOrbitByName orbitObjectNames overviewEntries =
             )
 
 
+-- 进入异常空间函数
+-- 此函数处理机器人如何选择和进入合适的异常空间进行战斗
 enterAnomaly :
     { ifNoAcceptableAnomalyAvailable : DecisionPathNode }
     -> BotDecisionContext
@@ -1233,9 +1302,10 @@ enterAnomaly :
 enterAnomaly { ifNoAcceptableAnomalyAvailable } context shipUI =
     case context.readingFromGameClient.probeScannerWindow of
         Nothing ->
-            describeBranch "I do not see the probe scanner window." askForHelpToGetUnstuck
+            describeBranch "找不到探针扫描窗口。" askForHelpToGetUnstuck
 
         Just probeScannerWindow ->
+            -- 获取扫描结果并标记哪些需要忽略
             let
                 scanResultsWithReasonToIgnore =
                     probeScannerWindow.scanResults
@@ -1246,24 +1316,27 @@ enterAnomaly { ifNoAcceptableAnomalyAvailable } context shipUI =
                                 )
                             )
             in
+            -- 从可接受的扫描结果中随机选择一个异常空间
             case
                 scanResultsWithReasonToIgnore
-                    |> List.filter (Tuple.second >> (==) Nothing)
+                    |> List.filter (Tuple.second >> (==) Nothing) -- 过滤掉需要忽略的结果
                     |> List.map Tuple.first
-                    |> listElementAtWrappedIndex (context.randomIntegers |> List.head |> Maybe.withDefault 0)
+                    |> listElementAtWrappedIndex (context.randomIntegers |> List.head |> Maybe.withDefault 0) -- 随机选择
             of
                 Nothing ->
+                    -- 没有找到合适的异常空间
                     describeBranch
-                        ("I see "
+                        ("我看到 "
                             ++ (probeScannerWindow.scanResults |> List.length |> String.fromInt)
-                            ++ " scan results, and no matching anomaly. Wait for a matching anomaly to appear."
+                            ++ " 个扫描结果，但没有匹配的异常空间。等待匹配的异常空间出现。"
                         )
                         ifNoAcceptableAnomalyAvailable
 
                 Just anomalyScanResult ->
-                    describeBranch "Warp to anomaly."
+                    -- 找到合适的异常空间，准备跃迁
+                    describeBranch "跃迁到异常空间。"
                         (useContextMenuCascade
-                            ( "Scan result", anomalyScanResult.uiNode )
+                            ( "扫描结果", anomalyScanResult.uiNode )
                             (useMenuEntryWithTextContaining "Warp to Within"
                                 (useMenuEntryWithTextContaining
                                     context.eventContext.botSettings.warpToAnomalyDistance
@@ -1274,9 +1347,12 @@ enterAnomaly { ifNoAcceptableAnomalyAvailable } context shipUI =
                         )
 
 
+-- 在跃迁前停用不需要的模块函数
+-- 此函数负责识别并停用在跃迁过程中不需要的激活模块
 deactivateModulesForWarp : BotDecisionContext -> Maybe DecisionPathNode
 deactivateModulesForWarp context =
     let
+        -- 找出需要停用的模块列表
         modulesToDeactivate : List ( String, EveOnline.ParseUserInterface.ShipUIModuleButton )
         modulesToDeactivate =
             case context.readingFromGameClient.shipUI of
@@ -1300,12 +1376,14 @@ deactivateModulesForWarp context =
                                                 context.memory.shipModules
                                             |> Maybe.andThen
                                                 (\tooltipMemory ->
+                                                    -- 获取模块按钮的提示文本
                                                     let
                                                         tooltipText =
                                                             tooltipMemory.allContainedDisplayTextsWithRegion
                                                                 |> List.map Tuple.first
                                                                 |> String.join " "
                                                     in
+                                                    -- 检查该模块是否在需要在跃迁时停用的列表中
                                                     if
                                                         context.eventContext.botSettings.deactivateModuleOnWarp
                                                             |> List.any (\moduleName -> tooltipText |> stringContainsIgnoringCase moduleName)
@@ -1317,29 +1395,34 @@ deactivateModulesForWarp context =
                                                 )
                             )
     in
+    -- 处理需要停用的模块
     case modulesToDeactivate of
         [] ->
+            -- 没有需要停用的模块
             Nothing
 
         ( moduleName, moduleToDeactivate ) :: _ ->
+            -- 点击停用模块以加速跃迁
             Just
-                (describeBranch ("Click module to deactivate '" ++ moduleName ++ "' to speed up warp.")
+                (describeBranch ("点击停用模块 '" ++ moduleName ++ "' 以加速跃迁。")
                     (clickModuleButtonButWaitIfClickedInPreviousStep context moduleToDeactivate)
                 )
 
 
+-- 当飞船被敌人指向时与敌人战斗的函数
+-- 当检测到飞船被敌人指向时，此函数指导机器人如何攻击指向自己的敌人
 fightRatsIfShipIsPointed :
     BotDecisionContext
     -> EveOnline.ParseUserInterface.ShipUI
     -> Maybe DecisionPathNode
 fightRatsIfShipIsPointed context shipUI =
-    {- Based on observation from 2024-04-24:
+    {- 基于2024-04-24的观察：
 
-       [...] "f" is the command to order the drones to fight the rat that is targeted.
+       [...] "f" 键是命令无人机攻击当前锁定目标的快捷键。
 
-       1.  If a human is playing the game, he will hold the "ctrl" key while left clicking the "pointed" symbol. THis will cause the game to target the rat that is pointing you.
-       2.  once target is locked he will then hit the 'f' key to make the drones fight that rat. OR he can do the same by right clicking the drones bar and engage.
-       3.  In the case of being targeted by multiple points, the above gets repeated.
+       1. 如果是人类玩家，他会按住 "ctrl" 键并左键点击 "被指向" 图标。这会导致游戏自动锁定指向你的敌人。
+       2. 一旦目标被锁定，他会按 'f' 键让无人机攻击那个敌人。或者他也可以右键点击无人机栏并选择攻击。
+       3. 如果被多个敌人指向，则重复上述步骤。
 
     -}
     case offensiveBuffButtonsIndicatingSelfShipIsPointed shipUI of
@@ -1378,63 +1461,78 @@ fightRatsIfShipIsPointed context shipUI =
                 )
 
 
+-- 使用无人机和武器模块进行战斗的核心函数
+-- 这个函数处理目标选择、武器激活和无人机控制的战斗逻辑
 fightUsingDronesAndModules :
-    { ifNoTarget : DecisionPathNode, lockNextTarget : DecisionPathNode, waitForProgress : DecisionPathNode }
+    { ifNoTarget : DecisionPathNode, lockNextTarget : DecisionPathNode, waitForProgress : DecisionPathNode } -- 配置参数
     -> BotDecisionContext
     -> EveOnline.ParseUserInterface.ShipUI
     -> DecisionPathNode
 fightUsingDronesAndModules config context shipUI =
     let
+        -- 获取按优先级排序的攻击目标
         ratsToAttackByPriority =
             ratsToAttackByPriorityFromContext context
 
+        -- 提取最高优先级的目标列表
         highPrioTargets : List EveOnline.ParseUserInterface.Target
         highPrioTargets =
             case ratsToAttackByPriority.targetsByPrio of
                 [] ->
                     []
-
                 ( first, rest ) :: _ ->
-                    first :: rest
+                    first :: rest -- 第一个目标优先级最高，加上同一优先级的其他目标
     in
+    -- 检查是否有锁定的目标
     case context.readingFromGameClient.targets of
         [] ->
-            describeBranch "I see no locked target."
+            -- 没有锁定目标，执行配置的无目标行为
+            describeBranch "没有锁定的目标。"
                 config.ifNoTarget
 
         _ :: _ ->
-            describeBranch "I see a locked target."
+            -- 有锁定目标，继续战斗逻辑
+            describeBranch "发现锁定的目标。"
                 (case checkActiveTargetIsOfHighestPriority ratsToAttackByPriority context.readingFromGameClient of
+                    -- 检查当前激活目标是否是最高优先级，如果不是，切换到高优先级目标
                     Just selectHighPrio ->
                         selectHighPrio
 
                     Nothing ->
+                        -- 激活目标已经是最高优先级，检查武器模块
                         case
                             shipUI
-                                |> shipUIModulesToActivateOnTarget
-                                |> List.filter (.isActive >> Maybe.withDefault False >> not)
-                                |> List.head
+                                |> shipUIModulesToActivateOnTarget -- 获取应该激活的武器模块
+                                |> List.filter (.isActive >> Maybe.withDefault False >> not) -- 过滤掉未激活的模块
+                                |> List.head -- 获取第一个需要激活的模块
                         of
                             Nothing ->
-                                describeBranch "All attack modules are active."
+                                -- 所有武器模块都已激活，处理无人机
+                                describeBranch "所有攻击模块都已激活。"
                                     (launchAndEngageDrones { redirectToTargets = Just highPrioTargets } context
+                                        -- 确保无人机正在攻击目标
                                         |> Maybe.withDefault
-                                            (describeBranch "No idling drones."
+                                            (describeBranch "没有空闲的无人机。"
+                                                -- 检查是否需要锁定更多目标
                                                 (if context.eventContext.botSettings.maxTargetCount <= (context.readingFromGameClient.targets |> List.length) then
-                                                    describeBranch "Enough locked targets." config.waitForProgress
-
+                                                    -- 已达到最大锁定目标数，等待战斗进展
+                                                    describeBranch "已锁定足够的目标。" config.waitForProgress
                                                  else
+                                                    -- 锁定下一个目标
                                                     config.lockNextTarget
                                                 )
                                             )
                                     )
 
                             Just inactiveModule ->
-                                describeBranch "I see an inactive module to activate on targets. Activate it."
+                                -- 发现未激活的武器模块，激活它
+                                describeBranch "发现需要在目标上激活的未激活模块。正在激活。"
                                     (clickModuleButtonButWaitIfClickedInPreviousStep context inactiveModule)
                 )
 
 
+-- 根据上下文计算攻击目标的优先级
+-- 这个函数决定机器人应该优先攻击哪些敌人目标
 ratsToAttackByPriorityFromContext : BotDecisionContext -> RatsByAttackPriority
 ratsToAttackByPriorityFromContext context =
     let
@@ -1518,6 +1616,8 @@ ensureShipIsOrbiting shipUI overviewEntryToOrbit =
             )
 
 
+-- 控制无人机发射和战斗行为的核心函数
+-- 此函数负责管理无人机的发射、攻击和重新分配目标
 launchAndEngageDrones :
     { redirectToTargets : Maybe (List EveOnline.ParseUserInterface.Target) }
     -> BotDecisionContext
@@ -1656,6 +1756,8 @@ launchAndEngageDrones config context =
                     Nothing
 
 
+-- 检查当前激活的目标是否是最高优先级的目标
+-- 这个函数确保机器人总是优先攻击威胁最大的敌人
 checkActiveTargetIsOfHighestPriority :
     RatsByAttackPriority
     -> ReadingFromGameClient
@@ -1776,6 +1878,8 @@ returnDronesToBay context =
                             )
 
 
+-- 从总览表中锁定目标
+-- 这个函数创建锁定特定总览条目的决策路径
 lockTargetFromOverviewEntry :
     BotDecisionContext
     -> OverviewWindowEntry
@@ -1860,72 +1964,84 @@ initBotMemory =
     }
 
 
+-- 生成机器人当前状态的文本描述
+-- 这个函数收集并格式化机器人的各种状态信息，包括战斗统计、飞船状态、无人机状态和当前异常空间信息
 statusTextFromState : BotDecisionContext -> String
 statusTextFromState context =
     let
+        -- 获取当前游戏客户端的读取数据
         readingFromGameClient =
             context.readingFromGameClient
 
+        -- 生成性能统计信息（已访问的异常空间数量）
         describePerformance =
-            "Visited anomalies: " ++ (context.memory.visitedAnomalies |> Dict.size |> String.fromInt) ++ "."
+            "已访问异常空间: " ++ (context.memory.visitedAnomalies |> Dict.size |> String.fromInt) ++ "个。"
 
+        -- 生成当前状态读取信息
         describeCurrentReading =
             case readingFromGameClient.shipUI of
+                -- 如果看不到飞船UI，可能处于停靠状态
                 Nothing ->
-                    [ "I do not see the ship UI. Looks like we are docked." ]
+                    [ "未检测到飞船UI。可能处于停靠状态。" ]
 
+                -- 如果看到飞船UI，收集详细信息
                 Just shipUI ->
                     let
+                        -- 生成飞船护盾状态描述
                         describeShip =
-                            "Shield HP at " ++ (shipUI.hitpointsPercent.shield |> String.fromInt) ++ "%."
+                            "护盾值: " ++ (shipUI.hitpointsPercent.shield |> String.fromInt) ++ "%。"
 
+                        -- 生成无人机状态描述
                         describeDrones =
                             case readingFromGameClient.dronesWindow of
                                 Nothing ->
-                                    "I do not see the drones window."
-
+                                    "未检测到无人机窗口。"
                                 Just dronesWindow ->
-                                    "I see the drones window: In bay: "
+                                    "已检测到无人机窗口: 无人机舱中: "
                                         ++ (dronesWindow.droneGroupInBay
                                                 |> Maybe.andThen (.header >> .quantityFromTitle)
                                                 |> Maybe.map (.current >> String.fromInt)
-                                                |> Maybe.withDefault "Unknown"
+                                                |> Maybe.withDefault "未知"
                                            )
-                                        ++ ", in space: "
+                                        ++ "架, 太空中: "
                                         ++ (dronesWindow.droneGroupInSpace
                                                 |> Maybe.andThen (.header >> .quantityFromTitle)
                                                 |> Maybe.map (.current >> String.fromInt)
-                                                |> Maybe.withDefault "Unknown"
+                                                |> Maybe.withDefault "未知"
                                            )
-                                        ++ "."
+                                        ++ "架。"
 
+                        -- 获取总览表中其他飞行员的名称
                         namesOfOtherPilotsInOverview =
                             getNamesOfOtherPilotsInOverview readingFromGameClient
 
+                        -- 生成当前异常空间描述
                         describeAnomaly =
-                            "Current anomaly: "
-                                ++ (getCurrentAnomalyIDAsSeenInProbeScanner readingFromGameClient |> Maybe.withDefault "None")
-                                ++ "."
+                            "当前异常空间: "
+                                ++ (getCurrentAnomalyIDAsSeenInProbeScanner readingFromGameClient |> Maybe.withDefault "无")
+                                ++ "。"
 
+                        -- 生成总览表中其他玩家描述
                         describeOverview =
-                            ("Seeing "
+                            ("总览表中发现 "
                                 ++ (namesOfOtherPilotsInOverview |> List.length |> String.fromInt)
-                                ++ " other pilots in the overview"
+                                ++ " 名其他飞行员"
                             )
                                 ++ (if namesOfOtherPilotsInOverview == [] then
                                         ""
-
                                     else
                                         ": " ++ (namesOfOtherPilotsInOverview |> String.join ", ")
                                    )
-                                ++ "."
+                                ++ "。"
                     in
+                    -- 将不同类别的信息分组并合并
                     [ [ describeShip ]
                     , [ describeDrones ]
                     , [ describeAnomaly, describeOverview ]
                     ]
-                        |> List.map (String.join " ")
+                        |> List.map (String.join " ") -- 合并每组中的信息
     in
+    -- 合并所有信息并以换行符分隔
     [ [ describePerformance ]
     , describeCurrentReading
     ]
